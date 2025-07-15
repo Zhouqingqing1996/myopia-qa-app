@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 class VectorDBManager:
     def __init__(self):
-        """初始化，配置嵌入模型。"""
         self.embeddings = DashScopeEmbeddings(
             model=config.EMBEDDING_MODEL_NAME,
             dashscope_api_key=config.DASHSCOPE_API_KEY
@@ -19,8 +18,6 @@ class VectorDBManager:
         self.db = None
 
     def _load_all_pdfs(self):
-        """从data文件夹加载所有PDF文件。"""
-        # ... 这部分函数内容保持不变 ...
         if not os.path.exists(config.DATA_PATH):
             logger.error(f"数据文件夹不存在: {config.DATA_PATH}")
             return []
@@ -42,65 +39,49 @@ class VectorDBManager:
                 logger.error(f"加载或处理文件 {pdf_file} 时出错: {e}")
         return all_docs
 
-
-    def create_db(self, recreate=False):
+    def get_or_create_db(self):
         """
-        创建并持久化一个新的FAISS向量数据库。
+        核心函数：如果数据库存在则加载，不存在则创建。
         """
-        if not recreate and os.path.exists(config.VECTOR_DB_PATH):
-            logger.info(f"数据库目录 '{config.VECTOR_DB_PATH}' 已存在。如需重建，请设置 recreate=True。")
-            return
+        if os.path.exists(config.VECTOR_DB_PATH):
+            logger.info("发现现有数据库，正在加载...")
+            self.load_db()
+        else:
+            logger.info("未发现数据库，开始创建新数据库...")
+            self.create_db()
+            logger.info("数据库创建完成，正在加载...")
+            self.load_db()
+        return self.db
 
-        logger.info("开始创建新的FAISS向量数据库...")
+    def create_db(self):
         docs = self._load_all_pdfs()
         if not docs:
             logger.error("未能加载任何文档，数据库创建中止。")
             return
-
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=config.CHUNK_SIZE,
             chunk_overlap=config.CHUNK_OVERLAP
         )
         splits = text_splitter.split_documents(docs)
-
         logger.info(f"所有文本被分割成 {len(splits)} 个块。正在生成嵌入并存入FAISS...")
-        # 使用FAISS创建数据库
         vector_db = FAISS.from_documents(splits, self.embeddings)
-        # 保存到本地
         vector_db.save_local(config.VECTOR_DB_PATH)
-        logger.info(f"FAISS向量数据库创建完成！")
+        logger.info(f"FAISS向量数据库已保存至 {config.VECTOR_DB_PATH}")
 
     def load_db(self):
-        """从磁盘加载已存在的FAISS数据库。"""
-        if self.db:
-            return self.db
-        
         if not os.path.exists(config.VECTOR_DB_PATH):
-            raise FileNotFoundError(f"向量数据库路径不存在: {config.VECTOR_DB_PATH}。请先运行 create_database.py。")
-        
-        logger.info("正在从磁盘加载FAISS向量数据库...")
-        # 从本地加载FAISS数据库
-        # allow_dangerous_deserialization=True 是FAISS加载所必需的
+            raise FileNotFoundError(f"向量数据库路径不存在: {config.VECTOR_DB_PATH}。")
         self.db = FAISS.load_local(
             config.VECTOR_DB_PATH, 
             self.embeddings,
             allow_dangerous_deserialization=True
         )
         logger.info("FAISS向量数据库加载成功。")
-        return self.db
 
     def retrieve(self, query: str) -> list:
-        """
-        执行一个检索操作。
-        """
+        if not self.db:
+            self.get_or_create_db()
         logger.info(f"正在为查询进行检索: '{query}'")
-        try:
-            db = self.load_db()
-            # FAISS 使用 similarity_search 来检索
-            results = db.similarity_search(query, k=config.RETRIEVE_K)
-            logger.info(f"检索到 {len(results)} 个相关文档块。")
-            return results
-        
-        except Exception as e:
-            logger.error(f"检索过程中发生错误: {e}")
-            return []
+        results = self.db.similarity_search(query, k=config.RETRIEVE_K)
+        logger.info(f"检索到 {len(results)} 个相关文档块。")
+        return results

@@ -54,6 +54,9 @@ UI_TEXTS = {
 
 # --- 组件初始化 (使用Streamlit缓存) ---
 @st.cache_resource
+# 在 app.py 中找到 initialize_components 函数，并用下面的代码替换它
+
+@st.cache_resource
 def initialize_components():
     """初始化问答系统所需的所有组件。"""
     logger.info("正在初始化组件...")
@@ -65,8 +68,9 @@ def initialize_components():
         llm_client = OpenAI(api_key=config.DASHSCOPE_API_KEY, base_url="https://dashscope.aliyuncs.com/compatible-mode/v1")
 
         # 2. 向量数据库管理器
+        #    现在调用 get_or_create_db 来自动处理创建或加载
         vdb_manager = VectorDBManager()
-        vdb_manager.load_db()
+        vdb_manager.get_or_create_db()  # <--- 这是主要修改点
 
         # 3. 查询缓存 (可选)
         cache = QueryCache(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
@@ -87,7 +91,6 @@ def initialize_components():
         st.error(f"组件初始化期间发生严重错误: {e}")
         logger.exception("Streamlit应用组件初始化期间发生严重错误。")
         return None
-
 # --- 主应用逻辑 ---
 if 'lang' not in st.session_state:
     st.session_state['lang'] = 'en'
