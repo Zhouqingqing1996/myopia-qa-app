@@ -14,7 +14,7 @@ REDIS_DB = 0
 
 # 项目路径配置
 DATA_PATH = "data"  # 存放PDF文献的文件夹
-VECTOR_DB_PATH = "faiss_index"
+VECTOR_DB_PATH = "faiss_index_v2"
 
 # 文本处理和检索参数
 CHUNK_SIZE = 1000
