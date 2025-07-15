@@ -3,24 +3,24 @@ import logging
 from openai import OpenAI
 
 # 项目模块导入
-from config import DASHSCOPE_API_KEY, REDIS_HOST, REDIS_PORT, REDIS_DB
+# ===================== 修改点在这里 =====================
+# 我们将导入整个 config 模块，而不是只导入里面的变量
+import config 
+# =======================================================
 from vectordb_manager import VectorDBManager
 from cache import QueryCache
 from workflow import MyopiaControlWorkflow
 
-# ==============================================================================
-# 1. 页面配置 (必须是第一个执行的 Streamlit 命令)
-# 我们在这里使用静态值，因为此命令必须在任何其他UI交互之前运行
+# 设置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# 页面配置
 st.set_page_config(
     page_title="Evidence-Based AI for Myopia Control",
     page_icon="🔬",
     layout="wide"
 )
-# ==============================================================================
-
-# 设置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 # --- UI 文本多语言支持 ---
 UI_TEXTS = {
@@ -69,7 +69,7 @@ def initialize_components():
         vdb_manager.load_db()
 
         # 3. 查询缓存 (可选)
-        cache = QueryCache(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
+        cache = QueryCache(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
         if not cache.redis_client:
             st.warning("无法连接到Redis，缓存功能将被禁用。")
             cache = None
@@ -89,9 +89,6 @@ def initialize_components():
         return None
 
 # --- 主应用逻辑 ---
-
-# 2. 语言选择和UI渲染
-# 使用 session_state 来存储语言选择，避免在每次交互时重置
 if 'lang' not in st.session_state:
     st.session_state['lang'] = 'en'
 
@@ -107,7 +104,6 @@ st.sidebar.radio(
 )
 texts = UI_TEXTS[st.session_state.lang]
 
-# 渲染页面的动态部分
 st.title(texts["title"])
 st.markdown(f"##### {texts['subtitle']}")
 st.markdown("---")
@@ -142,6 +138,5 @@ if workflow_instance:
 else:
     st.error(UI_TEXTS["en"]["error_init"])
 
-# --- 页脚 ---
 st.markdown("---")
 st.markdown(texts["footer"])
