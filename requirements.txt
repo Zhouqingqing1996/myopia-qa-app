@@ -1,3 +1,4 @@
+pysqlite3-binary
 streamlit==1.32.0
 openai==1.12.0
 numpy==1.26.3
