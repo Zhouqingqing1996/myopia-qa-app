@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 st.set_page_config(
     page_title="Evidence-Based AI for Myopia Control",
     page_icon="🔬",
-    layout="wide"
+    layout="centered"
 )
 
 # --- UI 文本多语言支持 ---
@@ -75,7 +75,7 @@ def initialize_components():
         # 3. 查询缓存 (可选)
         cache = QueryCache(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
         if not cache.redis_client:
-            st.warning("无法连接到Redis，缓存功能将被禁用。")
+            #st.warning("无法连接到Redis，缓存功能将被禁用。")
             cache = None
 
         # 4. 初始化工作流
