@@ -22,7 +22,7 @@ VECTOR_DB_PATH = f"faiss_index_{UNIQUE_ID}"
 DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY") 
 
 # 用于生成答案的LLM模型名称
-LLM_MODEL_NAME = "qwen-turbo"
+LLM_MODEL_NAME = "qwen-plus"
 # 用于文本嵌入的模型名称
 EMBEDDING_MODEL_NAME = "text-embedding-v2"
 
