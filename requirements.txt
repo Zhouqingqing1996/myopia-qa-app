@@ -1,12 +1,11 @@
+pysqlite3-binary
 streamlit==1.32.0
 openai==1.12.0
-numpy==1.26.3
+httpx==0.27.0
 redis
 python-dotenv
 langchain==0.1.16
 langchain_community==0.0.32
-# 移除 langchain-chroma 和 pysqlite3-binary
-# 新增 faiss-cpu
-faiss-cpu==1.7.4
+langchain-chroma==0.1.0
 dashscope==1.15.0
 pypdf==4.0.1
